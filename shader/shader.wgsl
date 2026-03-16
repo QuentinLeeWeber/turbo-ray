@@ -39,7 +39,7 @@ fn rayMarch(origin : vec3<f32>, position : vec3<f32>, direction : vec3<f32>, rad
         let point = origin + direction * dist;
 
         var radius = sdSphere(position - point, radius);
-        if(radius< eps) {
+        if(radius < eps) {
             let cos_angle = dot(aproximative_normal(point, radius), cam_direction);
             let brightness = clamp(cos_angle, 0.0, 1.0);
             //let color = vec3(abs(dist)) + brightness * vec3(1.0, 0.0, 0.0);
