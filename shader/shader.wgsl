@@ -22,6 +22,24 @@ struct GameObject {
     color: vec4<f32>,
 }
 
+@group(3) @binding(0)
+var<storage,read> syntax_tree: SyntaxTree;
+struct SyntaxTree {
+    length: i32,
+    num_root: i32,
+    nodes: array<SyntaxNode>,
+}
+
+struct SyntaxNode {
+    parent: i32, //negative for root nodes (eg. -1)
+    left: i32,  //left node is always a gameobj
+    left_neg: u32, //bool
+    right: i32,
+    right_neg: u32, //bool
+    right_gameobj: u32, //bool
+    min: u32, //bool
+}
+
 @group(1) @binding(0)
 var<uniform> screen_size: vec2<f32>;
 
@@ -42,14 +60,60 @@ struct SmallestRadiusResult {
     index: i32,
 }
 
-fn smallest_radius(origin: vec3<f32>) -> SmallestRadiusResult {
+fn get_lowest_leaf(start: i32) -> i32 {
+    var cur = start;
+    while syntax_tree.nodes[cur].right_gameobj == 0 {
+        cur = syntax_tree.nodes[cur].right;
+    }
+    return cur;
+}
+
+fn max(a: f32, b: f32) -> f32 {
+    if a > b {
+        return a;
+    }
+    return b;
+}
+fn min(a: f32, b: f32) -> f32 {
+    if a < b {
+        return a;
+    }
+    return b;
+}
+
+//gets smallest distance to any gameobject based on the syntax tree
+fn get_smallest_distance(origin: vec3<f32>) -> SmallestRadiusResult {
     var min_radius: f32 = 1000000.0;
     var min_index: i32 = 0;
-    for (var i = 0; i < game_objects.length; i++) {
-        let next_radius = sdSphere(game_objects.object[i].position - origin, game_objects.object[i].size);
-        if next_radius < min_radius {
-            min_radius = next_radius;
-            min_index = i;
+    for (var i: i32 = 0; i < syntax_tree.num_root; i++) {
+        let cur_node = &syntax_tree.nodes[get_lowest_leaf(i)];
+        let right_gameobj = &game_objects.object[(*cur_node).right];
+        var cur_dist: f32 = sdSphere((*right_gameobj).position - origin, (*right_gameobj).size);//always right node combined value, initially lowest right leaf distance
+        var collided_gameobj_index = (*cur_node).right;
+        while (*cur_node).parent >= 0 {
+            let left_gameobj = &game_objects.object[(*cur_node).left];
+            var left_dist: f32 = sdSphere((*left_gameobj).position - origin, (*left_gameobj).size);
+            if (*cur_node).left_neg != 0 {
+                left_dist *= -1;
+            }
+            if (*cur_node).right_neg != 0 {
+                cur_dist *= -1;
+            }
+            switch (*cur_node).min {
+                case 0: {//max
+                    cur_dist = max(cur_dist, left_dist);
+                }
+                case default: {//min
+                    cur_dist = min(cur_dist, left_dist);
+                }
+            }
+            if cur_dist == left_dist {
+                collided_gameobj_index = (*cur_node).left;
+            }
+        }
+        if cur_dist < min_radius {
+            min_radius = cur_dist;
+            min_index = collided_gameobj_index;
         }
     }
     return SmallestRadiusResult(min_radius, min_index);
@@ -63,7 +127,7 @@ fn rayMarch(origin: vec3<f32>, direction: vec3<f32>) -> vec4<f32> {
     for (var i = 0; i < maxIterations; i++) {
         let point = origin + direction * dist;
 
-        var radius_result = smallest_radius(point);
+        var radius_result = get_smallest_distance(point);
         if radius_result.radius < eps {
             let cos_angle = dot(aproximative_normal(point, radius_result.radius), cam.rot);
             let brightness = clamp(cos_angle, 0.0, 1.0);
