@@ -19,8 +19,8 @@ impl Default for GameObject {
         Self {
             position: [0.0, 0.0, 0.0],
             size: 1.0,
-            _padding: [0.0, 0.0, 0.0, 0.0],
             color: [1.0, 1.0, 1.0, 1.0],
+            _padding: [0.0, 0.0, 0.0, 0.0],
         }
     }
 }
@@ -30,8 +30,4 @@ impl Default for GameObject {
 pub struct ScreenSize {
     pub size: [f32; 2],
     pub _pad: [f32; 2],
-}
-
-pub enum SignedDistanceFunction {
-    Sphere,
 }

@@ -2,20 +2,21 @@ use winit::event_loop::{ControlFlow, EventLoop};
 
 mod game_object;
 mod renderer;
+mod wgpu_api;
 
 use game_object::GameObject;
-use renderer::App;
+use renderer::Renderer;
 
 fn main() {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut app = App::new(game_loop);
+    let mut app = Renderer::new(game_loop);
 
     event_loop.run_app(&mut app).unwrap();
 }
 
-fn game_loop(app: &mut App) {
+fn game_loop(app: &mut Renderer) {
     let game_objects = vec![GameObject {
         position: [0.0, 0.0, 1.0],
         size: 0.4,
