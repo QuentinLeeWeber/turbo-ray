@@ -1,11 +1,11 @@
 use std::f32::consts::PI;
 use winit::event_loop::{ControlFlow, EventLoop};
 
-mod game_object;
+mod gpu_structs;
 mod renderer;
 mod wgpu_api;
 
-use game_object::*;
+use gpu_structs::*;
 use renderer::Renderer;
 
 fn main() {

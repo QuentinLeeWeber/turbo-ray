@@ -1,4 +1,4 @@
-use crate::game_object::{self, Camera};
+use crate::gpu_structs::{self, Camera};
 use pollster::FutureExt;
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
@@ -124,7 +124,7 @@ impl WgpuApi {
 
         let screen_size_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Frame Size Unitform Buffer"),
-            contents: bytemuck::cast_slice(&vec![game_object::ScreenSize {
+            contents: bytemuck::cast_slice(&vec![gpu_structs::ScreenSize {
                 size: [0.0; 2],
                 _pad: [0.0; 2],
             }]),

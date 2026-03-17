@@ -1,4 +1,4 @@
-use crate::{game_object, wgpu_api::*};
+use crate::{gpu_structs, wgpu_api::*};
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -22,8 +22,8 @@ impl Renderer {
         }
     }
 
-    pub fn set_game_objects(&mut self, game_objects: Vec<game_object::GameObject>) {
-        let storage = game_object::GameObjectStorage {
+    pub fn set_game_objects(&mut self, game_objects: Vec<gpu_structs::GameObject>) {
+        let storage = gpu_structs::GameObjectStorage {
             length: game_objects.len() as u32,
             _pad: [0; 3],
         };
@@ -39,7 +39,7 @@ impl Renderer {
         }
     }
 
-    pub fn set_camera(&mut self, mut camera: game_object::Camera) {
+    pub fn set_camera(&mut self, mut camera: gpu_structs::Camera) {
         normalize(&mut camera.rot);
         if let Some(state) = &mut self.wgpu_api {
             state.queue.write_buffer(
@@ -85,7 +85,7 @@ impl ApplicationHandler for Renderer {
                     state.queue.write_buffer(
                         &state.gpu_buffers.screen_size,
                         0,
-                        bytemuck::cast_slice(&vec![game_object::ScreenSize {
+                        bytemuck::cast_slice(&vec![gpu_structs::ScreenSize {
                             size: [size.width as f32, size.height as f32],
                             _pad: [0.0; 2],
                         }]),
