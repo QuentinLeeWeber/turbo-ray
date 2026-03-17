@@ -7,14 +7,42 @@ pub struct GameObjectStorage {
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct GameObject {
+pub struct RenderObject {
     pub position: [f32; 3],
     pub size: f32,
     pub color: [f32; 4],
     pub _padding: [f32; 4],
 }
 
-impl Default for GameObject {
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct SyntaxNode {
+    pub left: u32,
+    pub left_neg: u32,     // bool
+    pub left_gameobj: u32, // bool
+    pub right: u32,
+    pub right_neg: u32,     // bool
+    pub right_gameobj: u32, // bool
+    pub min: u32,           // bool
+    pub parent: u32,
+}
+
+impl Default for SyntaxNode {
+    fn default() -> Self {
+        Self {
+            left: 0,
+            left_neg: 0,
+            left_gameobj: 0,
+            right: 0,
+            right_neg: 0,
+            right_gameobj: 0,
+            min: 0,
+            parent: 0,
+        }
+    }
+}
+
+impl Default for RenderObject {
     fn default() -> Self {
         Self {
             position: [0.0, 0.0, 0.0],

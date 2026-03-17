@@ -22,7 +22,7 @@ impl Renderer {
         }
     }
 
-    pub fn set_game_objects(&mut self, game_objects: Vec<gpu_structs::GameObject>) {
+    pub fn set_game_objects(&mut self, game_objects: Vec<gpu_structs::RenderObject>) {
         let storage = gpu_structs::GameObjectStorage {
             length: game_objects.len() as u32,
             _pad: [0; 3],
