@@ -1,13 +1,13 @@
-pub type ObjectNode = Box<SyntaxNodeRaw>;
+pub type ObjectNode = Box<ObjectNodeRaw>;
 
-pub struct SyntaxNodeRaw {
-    pub typ: ObjectnodeType,
+pub struct ObjectNodeRaw {
+    pub typ: ObjectNodeType,
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
-pub enum ObjectnodeType {
+pub enum ObjectNodeType {
     SDF(SignedDistanceFunction),
     Union(ObjectNode, ObjectNode),
     Intersection(ObjectNode, ObjectNode),

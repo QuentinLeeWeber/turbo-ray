@@ -6,30 +6,27 @@ mod gpu_structs;
 mod renderer;
 mod wgpu_api;
 
-use gpu_structs::{Camera, RenderObject};
+use game_object::scene::Scene;
+use gpu_structs::Camera;
 use renderer::Renderer;
+
+use crate::game_object::dummy::Dummy;
 
 fn main() {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let mut app = Renderer::new(game_loop());
+    let mut app = Renderer::new(update());
 
     event_loop.run_app(&mut app).unwrap();
 }
 
-fn game_loop() -> impl FnMut(&mut Renderer) {
-    let mut scene = game_object::scene::Scene::new();
+fn update() -> impl FnMut(&mut Renderer) {
+    let mut scene = Scene::new();
+
+    scene.add(Dummy::new());
 
     move |app| {
-        let game_objects = vec![RenderObject {
-            position: [0.0, 0.0, 1.0],
-            size: 0.1,
-            color: [1.0, 1.0, 0.0, 1.0],
-            ..Default::default()
-        }];
-        app.set_game_objects(game_objects);
-
         app.set_camera(Camera {
             pos: [0.0, 0.0, 0.0],
             rot: [0.0, 0.0, 1.0],
@@ -38,5 +35,6 @@ fn game_loop() -> impl FnMut(&mut Renderer) {
         });
 
         scene.update();
+        app.set_syntax_tree(scene.build_render_tree());
     }
 }

@@ -1,13 +1,13 @@
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct GameObjectStorage {
+pub struct LeafObjectStorage {
     pub length: u32,
     pub _pad: [u32; 3],
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct RenderObject {
+pub struct LeafObject {
     pub position: [f32; 3],
     pub size: f32,
     pub color: [f32; 4],
@@ -16,33 +16,43 @@ pub struct RenderObject {
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct SyntaxNodeStorage {
+    pub length: i32,
+    pub num_root: i32,
+    pub _pad: [u32; 2],
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SyntaxNode {
-    pub left: u32,
-    pub left_neg: u32,     // bool
-    pub left_gameobj: u32, // bool
-    pub right: u32,
-    pub right_neg: u32,     // bool
+    pub parent: i32,
+    pub left: i32,
+    pub left_neg: u32, // bool
+    //pub left_gameobj: u32, // bool
+    pub right: i32,
+    pub right_neg: i32,     // bool
     pub right_gameobj: u32, // bool
     pub min: u32,           // bool
-    pub parent: u32,
+    pub _pad: [u32; 1],
 }
 
 impl Default for SyntaxNode {
     fn default() -> Self {
         Self {
+            parent: 0,
             left: 0,
             left_neg: 0,
-            left_gameobj: 0,
+            //left_gameobj: 0,
             right: 0,
             right_neg: 0,
             right_gameobj: 0,
             min: 0,
-            parent: 0,
+            _pad: [0; 1],
         }
     }
 }
 
-impl Default for RenderObject {
+impl Default for LeafObject {
     fn default() -> Self {
         Self {
             position: [0.0, 0.0, 0.0],

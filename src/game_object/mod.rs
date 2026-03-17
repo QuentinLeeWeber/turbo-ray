@@ -1,5 +1,6 @@
 use crate::gpu_structs;
 
+pub mod dummy;
 pub mod object_tree;
 pub mod scene;
 
@@ -15,8 +16,8 @@ pub enum SceneCommand {
     Spawn(GameObjectBox),
 }
 
-struct FlatRenderTree {
-    nodes: Vec<gpu_structs::SyntaxNode>,
-    leafs: Vec<gpu_structs::RenderObject>,
-    first_layer_length: u32,
+pub struct FlatRenderTree {
+    pub nodes: Vec<gpu_structs::SyntaxNode>,
+    pub leafs: Vec<gpu_structs::LeafObject>,
+    pub first_layer_length: u32,
 }

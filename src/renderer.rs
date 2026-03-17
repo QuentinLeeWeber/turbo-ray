@@ -22,20 +22,35 @@ impl Renderer {
         }
     }
 
-    pub fn set_game_objects(&mut self, game_objects: Vec<gpu_structs::RenderObject>) {
-        let storage = gpu_structs::GameObjectStorage {
-            length: game_objects.len() as u32,
+    //pub fn set_game_objects(&mut self, game_objects: Vec<gpu_structs::RenderObject>) {
+    pub fn set_syntax_tree(&mut self, syntax_tree: crate::game_object::FlatRenderTree) {
+        let leaf_storage = gpu_structs::LeafObjectStorage {
+            length: syntax_tree.leafs.len() as u32,
             _pad: [0; 3],
         };
 
-        let mut data = Vec::new();
-        data.extend_from_slice(bytemuck::cast_slice(&[storage]));
-        data.extend_from_slice(bytemuck::cast_slice(&game_objects));
+        let node_storage = gpu_structs::SyntaxNodeStorage {
+            length: syntax_tree.nodes.len() as i32,
+            num_root: syntax_tree.first_layer_length as i32,
+            _pad: [0; 2],
+        };
+
+        let mut leaf_data = Vec::new();
+        leaf_data.extend_from_slice(bytemuck::cast_slice(&[leaf_storage]));
+        leaf_data.extend_from_slice(bytemuck::cast_slice(&syntax_tree.leafs));
+
+        let mut node_data = Vec::new();
+        node_data.extend_from_slice(bytemuck::cast_slice(&[node_storage]));
+        node_data.extend_from_slice(bytemuck::cast_slice(&syntax_tree.nodes));
 
         if let Some(state) = &mut self.wgpu_api {
             state
                 .queue
-                .write_buffer(&state.gpu_buffers.game_object, 0, &data);
+                .write_buffer(&state.gpu_buffers.game_object, 0, &leaf_data);
+
+            state
+                .queue
+                .write_buffer(&state.gpu_buffers.syntax_tree, 0, &node_data);
         }
     }
 

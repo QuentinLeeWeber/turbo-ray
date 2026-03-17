@@ -9,9 +9,11 @@ pub struct GpuBuffers {
     pub game_object: wgpu::Buffer,
     pub screen_size: wgpu::Buffer,
     pub camera: wgpu::Buffer,
+    pub syntax_tree: wgpu::Buffer,
     game_object_group: wgpu::BindGroup,
     screen_size_group: wgpu::BindGroup,
     camera_group: wgpu::BindGroup,
+    syntax_tree_group: wgpu::BindGroup,
 }
 
 pub struct WgpuApi {
@@ -79,6 +81,21 @@ impl WgpuApi {
                 }],
             });
 
+        let syntax_tree_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Syntax Tree Storage Layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+
         let camera_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Camera Uniform Layout"),
@@ -116,6 +133,13 @@ impl WgpuApi {
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
         });
 
+        let syntax_tree_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            mapped_at_creation: false,
+            label: Some("Syntax Tree Storage Buffer"),
+            size: 48 * 1000,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        });
+
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Uniform Buffer"),
             contents: bytemuck::cast_slice(&vec![Camera::default()]),
@@ -132,11 +156,20 @@ impl WgpuApi {
         });
 
         let game_object_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Game Objects Uniform"),
+            label: Some("Game Objects Storage"),
             layout: &game_object_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
                 resource: game_object_buffer.as_entire_binding(),
+            }],
+        });
+
+        let syntax_tree_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Syntax Tree Storage"),
+            layout: &syntax_tree_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: syntax_tree_buffer.as_entire_binding(),
             }],
         });
 
@@ -164,6 +197,7 @@ impl WgpuApi {
                 &game_object_group_layout,
                 &screen_size_group_layout,
                 &camera_group_layout,
+                &syntax_tree_group_layout,
             ],
             immediate_size: 0,
         });
@@ -204,9 +238,11 @@ impl WgpuApi {
                 game_object: game_object_buffer,
                 screen_size: screen_size_buffer,
                 camera: camera_buffer,
+                syntax_tree: syntax_tree_buffer,
                 game_object_group,
                 screen_size_group,
                 camera_group,
+                syntax_tree_group,
             },
         }
     }
@@ -260,6 +296,7 @@ impl WgpuApi {
             pass.set_bind_group(0, &self.gpu_buffers.game_object_group, &[]);
             pass.set_bind_group(1, &self.gpu_buffers.screen_size_group, &[]);
             pass.set_bind_group(2, &self.gpu_buffers.camera_group, &[]);
+            pass.set_bind_group(3, &self.gpu_buffers.syntax_tree_group, &[]);
 
             pass.set_pipeline(&self.pipeline);
             pass.draw(0..3, 0..1);

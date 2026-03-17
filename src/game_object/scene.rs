@@ -1,6 +1,6 @@
 use super::{
     FlatRenderTree, GameObjectBox, GameObjectTrait, SceneCommand,
-    object_tree::{ObjectNode, ObjectnodeType, SignedDistanceFunction},
+    object_tree::{ObjectNode, ObjectNodeType},
 };
 use crate::gpu_structs;
 use std::time::SystemTime;
@@ -29,7 +29,7 @@ impl Scene {
         let current_time = std::time::SystemTime::now();
         let mut commands: Vec<SceneCommand> = vec![];
         self.game_objects.retain_mut(|game_object| {
-            let mut should_remove = false;
+            let mut keep = true;
             game_object
                 .update(
                     current_time
@@ -40,12 +40,12 @@ impl Scene {
                 .into_iter()
                 .for_each(|command| {
                     if let SceneCommand::Kill = command {
-                        should_remove = true;
+                        keep = false;
                     } else {
                         commands.push(command);
                     }
                 });
-            should_remove
+            keep
         });
 
         commands.into_iter().for_each(|command| match command {
@@ -56,16 +56,16 @@ impl Scene {
         self.last_time = current_time;
     }
 
-    fn build_render_tree(&self) -> FlatRenderTree {
+    pub fn build_render_tree(&self) -> FlatRenderTree {
         let mut nodes: Vec<gpu_structs::SyntaxNode> = Vec::new();
-        let mut leafs: Vec<gpu_structs::RenderObject> = Vec::new();
+        let mut leafs: Vec<gpu_structs::LeafObject> = Vec::new();
 
         if self.game_objects.is_empty() {
             panic!("game_objects is empty, not implemented!");
         }
 
         for game_obj in &self.game_objects {
-            write_node(game_obj.get_syntax_tree(), &mut nodes, &mut leafs, 0);
+            write_node(game_obj.get_syntax_tree(), &mut nodes, &mut leafs, -1);
         }
 
         FlatRenderTree {
@@ -79,13 +79,13 @@ impl Scene {
 fn write_node(
     node: &ObjectNode,
     nodes: &mut Vec<gpu_structs::SyntaxNode>,
-    leafs: &mut Vec<gpu_structs::RenderObject>,
-    parent: usize,
+    leafs: &mut Vec<gpu_structs::LeafObject>,
+    parent: i32,
 ) -> bool {
-    use ObjectnodeType::*;
+    use ObjectNodeType::*;
     match &node.typ {
         SDF(sdf) => {
-            leafs.push(gpu_structs::RenderObject {
+            leafs.push(gpu_structs::LeafObject {
                 position: [node.x, node.y, node.z],
                 size: sdf.size,
                 color: sdf.color,
@@ -100,7 +100,7 @@ fn write_node(
                 left_neg: 0,
                 right_neg: 0,
                 min: 0,
-                parent: parent as u32,
+                parent: parent as i32,
                 ..Default::default()
             });
             write_syntax_node(index, nodes, leafs, &left, &right);
@@ -113,7 +113,7 @@ fn write_node(
                 left_neg: 0,
                 right_neg: 0,
                 min: 1,
-                parent: parent as u32,
+                parent: parent as i32,
                 ..Default::default()
             });
             write_syntax_node(index, nodes, leafs, &left, &right);
@@ -126,7 +126,7 @@ fn write_node(
                 left_neg: 0,
                 right_neg: 1,
                 min: 0,
-                parent: parent as u32,
+                parent: parent as i32,
                 ..Default::default()
             });
             write_syntax_node(index, nodes, leafs, left, right);
@@ -138,27 +138,28 @@ fn write_node(
 fn write_syntax_node(
     index: usize,
     nodes: &mut Vec<gpu_structs::SyntaxNode>,
-    leafs: &mut Vec<gpu_structs::RenderObject>,
+    leafs: &mut Vec<gpu_structs::LeafObject>,
     left: &ObjectNode,
     right: &ObjectNode,
 ) {
-    let is_leaf_right = write_node(left, nodes, leafs, index);
+    let is_leaf_right = write_node(left, nodes, leafs, index as i32);
 
     if is_leaf_right {
-        nodes[index].right = leafs.len() as u32 - 1;
+        nodes[index].right = leafs.len() as i32 - 1;
         nodes[index].right_gameobj = 1;
     } else {
-        nodes[index].right = nodes.len() as u32 - 1;
+        nodes[index].right = nodes.len() as i32 - 1;
         nodes[index].right_gameobj = 0;
     };
 
-    let is_leaf_left = write_node(right, nodes, leafs, index);
+    let is_leaf_left = write_node(right, nodes, leafs, index as i32);
 
     if is_leaf_left {
-        nodes[index].left = leafs.len() as u32 - 1;
-        nodes[index].left_gameobj = 1;
+        nodes[index].left = leafs.len() as i32 - 1;
+        //nodes[index].left_gameobj = 1;
     } else {
-        nodes[index].left = nodes.len() as u32 - 1;
-        nodes[index].left_gameobj = 0;
+        nodes[index].left = nodes.len() as i32 - 1;
+        unreachable!()
+        //nodes[index].left_gameobj = 0;
     };
 }
