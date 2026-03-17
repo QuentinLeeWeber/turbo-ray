@@ -64,9 +64,7 @@ fn rayMarch(origin: vec3<f32>, direction: vec3<f32>) -> vec4<f32> {
             let cos_angle = dot(aproximative_normal(point, radius_result.radius), cam_direction);
             let brightness = clamp(cos_angle, 0.0, 1.0);
 
-            //this is not working, i really dont know why
-            //var color = game_objects.object[radius_result.index].color.rgb * brightness;
-            let color = vec3(1.0 - abs(dist)) * brightness;
+            let color = game_objects.object[radius_result.index].color.rgb * brightness * (1.0 - dist);
 
             return vec4(color, 1.0);
         }

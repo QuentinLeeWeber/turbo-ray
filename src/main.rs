@@ -19,9 +19,9 @@ fn main() {
 fn game_loop(app: &mut Renderer) {
     let game_objects = vec![GameObject {
         position: [0.0, 0.0, 1.0],
-        size: 0.4,
-        _padding: [0.0; 4],
-        color: [1.0, 1.0, 1.0, 1.0],
+        size: 0.1,
+        color: [1.0, 1.0, 0.0, 1.0],
+        ..Default::default()
     }];
     app.set_game_objects(game_objects);
 }
