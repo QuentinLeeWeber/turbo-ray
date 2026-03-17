@@ -12,7 +12,6 @@ pub struct Renderer {
     wgpu_api: Option<WgpuApi>,
     main_loop_callback: Option<Box<dyn FnMut(&mut Renderer)>>,
 }
-
 impl Renderer {
     pub fn new(main_loop_callback: impl FnMut(&mut Renderer) + 'static) -> Self {
         Self {
