@@ -22,6 +22,24 @@ struct GameObject {
     color: vec4<f32>,
 }
 
+@group(3) @binding(0)
+var<storage,read> syntax_tree: SyntaxTree;
+struct SyntaxTree {
+    length: i32,
+    num_root: u32,
+    nodes: array<SyntaxNode>,
+}
+
+struct SyntaxNode {
+    left: u32,
+    left_neg: u32, //bool
+    left_gameobj: u32, //bool
+    right: u32,
+    right_neg: u32, //bool
+    right_gameobj: u32, //bool
+    min: u32, //bool
+}
+
 @group(1) @binding(0)
 var<uniform> screen_size: vec2<f32>;
 
