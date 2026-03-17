@@ -1,10 +1,11 @@
+use std::f32::consts::PI;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 mod game_object;
 mod renderer;
 mod wgpu_api;
 
-use game_object::GameObject;
+use game_object::*;
 use renderer::Renderer;
 
 fn main() {
@@ -24,4 +25,11 @@ fn game_loop(app: &mut Renderer) {
         ..Default::default()
     }];
     app.set_game_objects(game_objects);
+
+    app.set_camera(Camera {
+        pos: [0.0, 0.0, 0.0],
+        rot: [0.0, 0.0, 1.0],
+        fov: PI / 2.0,
+        ..Default::default()
+    });
 }

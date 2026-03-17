@@ -10,10 +10,6 @@ fn vs_main(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
 
 const PI: f32 = 3.14159265359;
 
-const fov = PI / 2.0;
-const cam_origin = vec3(0.0, 0.0, 0.0);
-const cam_direction = vec3(0.0, 0.0, 1.0); //normal
-
 @group(0) @binding(0)
 var<storage, read> game_objects: GameObjectStorage;
 struct GameObjectStorage {
@@ -28,6 +24,14 @@ struct GameObject {
 
 @group(1) @binding(0)
 var<uniform> screen_size: vec2<f32>;
+
+@group(2) @binding(0)
+var<uniform> cam: Camera;
+struct Camera {
+    pos: vec3<f32>,
+    rot: vec3<f32>,
+    fov: f32,
+}
 
 fn sdSphere(x: vec3<f32>, radius: f32) -> f32 {
     return length(x) - radius;
@@ -61,7 +65,7 @@ fn rayMarch(origin: vec3<f32>, direction: vec3<f32>) -> vec4<f32> {
 
         var radius_result = smallest_radius(point);
         if radius_result.radius < eps {
-            let cos_angle = dot(aproximative_normal(point, radius_result.radius), cam_direction);
+            let cos_angle = dot(aproximative_normal(point, radius_result.radius), cam.rot);
             let brightness = clamp(cos_angle, 0.0, 1.0);
 
             let color = game_objects.object[radius_result.index].color.rgb * brightness * (1.0 - dist);
@@ -86,8 +90,8 @@ fn aproximative_normal(p: vec3<f32>, radius: f32) -> vec3<f32> {
 fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     let ndc = (fragCoord.xy / screen_size) * 2.0 - vec2(1.0, 1.0);
     let aspect = screen_size.x / screen_size.y;
-    let dir = normalize(vec3(ndc.x * tan(fov / 2.0) * aspect, ndc.y * tan(fov / 2.0), 1.0));
+    let dir = normalize(vec3(ndc.x * tan(cam.fov / 2.0) * aspect, ndc.y * tan(cam.fov / 2.0), 1.0));
 
-    let color = rayMarch(cam_origin, dir);
+    let color = rayMarch(cam.pos, dir);
     return color;
 }

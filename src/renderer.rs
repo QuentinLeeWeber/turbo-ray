@@ -38,6 +38,24 @@ impl Renderer {
                 .write_buffer(&state.gpu_buffers.game_object, 0, &data);
         }
     }
+
+    pub fn set_camera(&mut self, mut camera: game_object::Camera) {
+        normalize(&mut camera.rot);
+        if let Some(state) = &mut self.wgpu_api {
+            state.queue.write_buffer(
+                &state.gpu_buffers.camera,
+                0,
+                bytemuck::cast_slice(&[camera]),
+            );
+        }
+    }
+}
+
+fn normalize(rot: &mut [f32]) {
+    let len = rot.iter().map(|c| c * c).sum::<f32>().sqrt();
+    for c in rot {
+        *c /= len;
+    }
 }
 
 impl ApplicationHandler for Renderer {

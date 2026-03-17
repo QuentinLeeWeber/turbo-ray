@@ -1,4 +1,4 @@
-use crate::game_object;
+use crate::game_object::{self, Camera};
 use pollster::FutureExt;
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
@@ -8,8 +8,10 @@ use winit::window::Window;
 pub struct GpuBuffers {
     pub game_object: wgpu::Buffer,
     pub screen_size: wgpu::Buffer,
+    pub camera: wgpu::Buffer,
     game_object_group: wgpu::BindGroup,
     screen_size_group: wgpu::BindGroup,
+    camera_group: wgpu::BindGroup,
 }
 
 pub struct WgpuApi {
@@ -77,6 +79,21 @@ impl WgpuApi {
                 }],
             });
 
+        let camera_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Camera Uniform Layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+
         let screen_size_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Screen Size Uniform Layout"),
@@ -99,6 +116,12 @@ impl WgpuApi {
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
         });
 
+        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Uniform Buffer"),
+            contents: bytemuck::cast_slice(&vec![Camera::default()]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
         let screen_size_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Frame Size Unitform Buffer"),
             contents: bytemuck::cast_slice(&vec![game_object::ScreenSize {
@@ -117,6 +140,15 @@ impl WgpuApi {
             }],
         });
 
+        let camera_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Camera Uniform"),
+            layout: &camera_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer.as_entire_binding(),
+            }],
+        });
+
         let screen_size_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("Frame Size Uniform"),
             layout: &screen_size_group_layout,
@@ -128,7 +160,11 @@ impl WgpuApi {
 
         let pipeline_layout = device.create_pipeline_layout(&PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[&game_object_group_layout, &screen_size_group_layout],
+            bind_group_layouts: &[
+                &game_object_group_layout,
+                &screen_size_group_layout,
+                &camera_group_layout,
+            ],
             immediate_size: 0,
         });
 
@@ -167,8 +203,10 @@ impl WgpuApi {
             gpu_buffers: GpuBuffers {
                 game_object: game_object_buffer,
                 screen_size: screen_size_buffer,
+                camera: camera_buffer,
                 game_object_group,
                 screen_size_group,
+                camera_group,
             },
         }
     }
@@ -221,6 +259,7 @@ impl WgpuApi {
 
             pass.set_bind_group(0, &self.gpu_buffers.game_object_group, &[]);
             pass.set_bind_group(1, &self.gpu_buffers.screen_size_group, &[]);
+            pass.set_bind_group(2, &self.gpu_buffers.camera_group, &[]);
 
             pass.set_pipeline(&self.pipeline);
             pass.draw(0..3, 0..1);
