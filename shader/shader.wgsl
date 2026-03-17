@@ -1,17 +1,11 @@
 @vertex
-fn vs_main(@builtin(vertex_index) i : u32) -> @builtin(position) vec4<f32> {
+fn vs_main(@builtin(vertex_index) i: u32) -> @builtin(position) vec4<f32> {
     var pos = array<vec2<f32>,3>(
-        vec2(-1.0,-1.0),
-        vec2( 3.0,-1.0),
+        vec2(-1.0, -1.0),
+        vec2(3.0, -1.0),
         vec2(-1.0, 3.0)
     );
-    return vec4(pos[i],0.0,1.0);
-}
-
-struct GameObject {
-    position : vec3<f32>,
-    size : f32,
-    color : vec4<f32>,
+    return vec4(pos[i], 0.0, 1.0);
 }
 
 const PI: f32 = 3.14159265359;
@@ -21,33 +15,62 @@ const cam_origin = vec3(0.0, 0.0, 0.0);
 const cam_direction = vec3(0.0, 0.0, 1.0); //normal
 
 @group(0) @binding(0)
-var<storage, read> game_objects : array<GameObject>;
+var<storage, read> game_objects: GameObjectStorage;
+struct GameObjectStorage {
+    length: i32,
+    object: array<GameObject>,
+}
+struct GameObject {
+    position: vec3<f32>,
+    size: f32,
+    color: vec4<f32>,
+}
 
 @group(1) @binding(0)
-var<uniform> screen_size : vec2<f32>;
+var<uniform> screen_size: vec2<f32>;
 
-fn sdSphere(x : vec3<f32>, radius : f32) -> f32 {
+fn sdSphere(x: vec3<f32>, radius: f32) -> f32 {
     return length(x) - radius;
 }
 
-fn rayMarch(origin : vec3<f32>, position : vec3<f32>, direction : vec3<f32>, radius : f32) -> vec4<f32> {
+struct SmallestRadiusResult {
+    radius: f32,
+    index: i32,
+}
+
+fn smallest_radius(origin: vec3<f32>) -> SmallestRadiusResult {
+    var min_radius: f32 = 1000000.0;
+    var min_index: i32 = 0;
+    for (var i = 0; i < game_objects.length; i++) {
+        let next_radius = sdSphere(game_objects.object[i].position - origin, game_objects.object[i].size);
+        if next_radius < min_radius {
+            min_radius = next_radius;
+            min_index = i;
+        }
+    }
+    return SmallestRadiusResult(min_radius, min_index);
+}
+
+fn rayMarch(origin: vec3<f32>, direction: vec3<f32>) -> vec4<f32> {
     let maxIterations: i32 = 100;
     let eps: f32 = 0.001;
     var dist: f32 = 0.0;
 
-    for(var i = 0; i < maxIterations; i++) {
+    for (var i = 0; i < maxIterations; i++) {
         let point = origin + direction * dist;
 
-        var radius = sdSphere(position - point, radius);
-        if(radius < eps) {
-            let cos_angle = dot(aproximative_normal(point, radius), cam_direction);
+        var radius_result = smallest_radius(point);
+        if radius_result.radius < eps {
+            let cos_angle = dot(aproximative_normal(point, radius_result.radius), cam_direction);
             let brightness = clamp(cos_angle, 0.0, 1.0);
-            //let color = vec3(abs(dist)) + brightness * vec3(1.0, 0.0, 0.0);
+
+            //this is not working, i really dont know why
+            //var color = game_objects.object[radius_result.index].color.rgb * brightness;
             let color = vec3(1.0 - abs(dist)) * brightness;
 
             return vec4(color, 1.0);
         }
-        dist += radius;
+        dist += radius_result.radius;
     }
     return vec4(0.0, 0.0, 0.0, 0.0);
 }
@@ -62,14 +85,11 @@ fn aproximative_normal(p: vec3<f32>, radius: f32) -> vec3<f32> {
 }
 
 @fragment
-fn fs_main(@builtin(position) fragCoord : vec4<f32>) -> @location(0) vec4<f32> {
+fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     let ndc = (fragCoord.xy / screen_size) * 2.0 - vec2(1.0, 1.0);
     let aspect = screen_size.x / screen_size.y;
-    let dir = normalize(vec3(ndc.x * tan(fov/2.0) * aspect, ndc.y * tan(fov/2.0), 1.0));
+    let dir = normalize(vec3(ndc.x * tan(fov / 2.0) * aspect, ndc.y * tan(fov / 2.0), 1.0));
 
-    let radius = 0.4;
-
-
-    let color = rayMarch(cam_origin, vec3(0.0, 0.0, 0.5), dir, radius);
+    let color = rayMarch(cam_origin, dir);
     return color;
 }

@@ -10,20 +10,19 @@ use winit::{
     window::{Window, WindowId},
 };
 
-struct State {
+struct WgpuApi {
     surface: Surface<'static>,
     device: Device,
     queue: Queue,
     config: SurfaceConfiguration,
     pipeline: RenderPipeline,
-    game_objects: Vec<game_object::GameObject>,
     game_object_buffer: wgpu::Buffer,
     screen_size_buffer: wgpu::Buffer,
     game_object_group: wgpu::BindGroup,
     screen_size_group: wgpu::BindGroup,
 }
 
-impl State {
+impl WgpuApi {
     fn new(window: Arc<Window>) -> Self {
         let size = window.inner_size();
 
@@ -94,15 +93,10 @@ impl State {
                 }],
             });
 
-        let game_objects = vec![game_object::GameObject {
-            position: [0.0, 0.0, 0.0],
-            size: 0.0,
-            color: [0.0, 0.0, 0.0, 0.0],
-        }];
-
-        let game_object_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let game_object_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            mapped_at_creation: false,
             label: Some("Game Objects Storage Buffer"),
-            contents: bytemuck::cast_slice(&game_objects),
+            size: 48 * 1000,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
         });
 
@@ -171,7 +165,6 @@ impl State {
             queue,
             config,
             pipeline,
-            game_objects,
             game_object_buffer,
             screen_size_buffer,
             game_object_group,
@@ -208,12 +201,6 @@ impl State {
             });
 
         {
-            self.queue.write_buffer(
-                &self.game_object_buffer,
-                0,
-                bytemuck::cast_slice(&self.game_objects),
-            );
-
             let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("render pass"),
                 color_attachments: &[Some(RenderPassColorAttachment {
@@ -245,14 +232,33 @@ impl State {
 
 pub struct App {
     window: Option<Arc<Window>>,
-    state: Option<State>,
+    wgpu_api: Option<WgpuApi>,
+    main_loop_callback: Option<Box<dyn FnMut(&mut App)>>,
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(main_loop_callback: impl FnMut(&mut App) + 'static) -> Self {
         Self {
             window: None,
-            state: None,
+            wgpu_api: None,
+            main_loop_callback: Some(Box::new(main_loop_callback)),
+        }
+    }
+
+    pub fn set_game_objects(&mut self, game_objects: Vec<game_object::GameObject>) {
+        let storage = game_object::GameObjectStorage {
+            length: game_objects.len() as u32,
+            _pad: [0; 3],
+        };
+
+        let mut data = Vec::new();
+        data.extend_from_slice(bytemuck::cast_slice(&[storage]));
+        data.extend_from_slice(bytemuck::cast_slice(&game_objects));
+
+        if let Some(state) = &mut self.wgpu_api {
+            state
+                .queue
+                .write_buffer(&state.game_object_buffer, 0, &data);
         }
     }
 }
@@ -264,7 +270,7 @@ impl ApplicationHandler for App {
                 .create_window(Window::default_attributes().with_title("rust-3d"))
                 .unwrap(),
         );
-        self.state = Some(State::new(window.clone()));
+        self.wgpu_api = Some(WgpuApi::new(window.clone()));
         self.window = Some(window);
     }
 
@@ -278,7 +284,7 @@ impl ApplicationHandler for App {
             WindowEvent::CloseRequested => event_loop.exit(),
 
             WindowEvent::Resized(size) => {
-                if let Some(state) = &mut self.state {
+                if let Some(state) = &mut self.wgpu_api {
                     state.resize(size);
 
                     state.queue.write_buffer(
@@ -293,7 +299,11 @@ impl ApplicationHandler for App {
             }
 
             WindowEvent::RedrawRequested => {
-                if let Some(state) = &mut self.state {
+                if let Some(mut callback) = self.main_loop_callback.take() {
+                    (callback)(self);
+                    self.main_loop_callback = Some(callback);
+                }
+                if let Some(state) = &mut self.wgpu_api {
                     state.render();
                 }
                 if let Some(window) = &self.window {
