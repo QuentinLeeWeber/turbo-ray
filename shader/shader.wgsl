@@ -45,6 +45,7 @@ struct SmallestRadiusResult {
 fn smallest_radius(origin: vec3<f32>) -> SmallestRadiusResult {
     var min_radius: f32 = 1000000.0;
     var min_index: i32 = 0;
+
     for (var i = 0; i < game_objects.length; i++) {
         let next_radius = sdSphere(game_objects.object[i].position - origin, game_objects.object[i].size);
         if next_radius < min_radius {
@@ -65,33 +66,84 @@ fn rayMarch(origin: vec3<f32>, direction: vec3<f32>) -> vec4<f32> {
 
         var radius_result = smallest_radius(point);
         if radius_result.radius < eps {
-            let cos_angle = dot(aproximative_normal(point, radius_result.radius), cam.rot);
-            let brightness = clamp(cos_angle, 0.0, 1.0);
+            let normal = approximate_normal(point);
 
-            let color = game_objects.object[radius_result.index].color.rgb * brightness * (1.0 - dist);
+            let light_dir = normalize(vec3(1.0, 1.0, -1.0));
+            let ambient = 0.008;
+            let diffuse = clamp(dot(normal, light_dir), 0.0, 1.0);
+            let brightness = ambient + diffuse * (1.0 - ambient);
+            let color = game_objects.object[radius_result.index].color.rgb * brightness;
 
             return vec4(color, 1.0);
         }
-        dist += radius_result.radius;
+        dist += max(radius_result.radius, 0.0);
     }
     return vec4(0.0, 0.0, 0.0, 0.0);
 }
 
-fn aproximative_normal(p: vec3<f32>, radius: f32) -> vec3<f32> {
-    let eps = 0.001;
-    return normalize(vec3(
-        sdSphere(p + vec3(eps, 0.0, 0.0), radius) - sdSphere(p - vec3(eps, 0.0, 0.0), radius),
-        sdSphere(p + vec3(0.0, eps, 0.0), radius) - sdSphere(p - vec3(0.0, eps, 0.0), radius),
-        sdSphere(p + vec3(0.0, 0.0, eps), radius) - sdSphere(p - vec3(0.0, 0.0, eps), radius),
-    ));
+fn scene_sdf(p: vec3<f32>) -> f32 {
+    var min_dist: f32 = 1000000.0;
+
+    for (var i = 0; i < game_objects.length; i++) {
+        let obj = game_objects.object[i];
+        let d = sdSphere(p - obj.position, obj.size);
+
+        if d < min_dist {
+            min_dist = d;
+        }
+    }
+
+    return min_dist;
+}
+
+fn approximate_normal(p: vec3<f32>) -> vec3<f32> {
+    let eps: f32 = 0.001;
+
+    let dx = scene_sdf(p + vec3(eps, 0.0, 0.0)) - scene_sdf(p - vec3(eps, 0.0, 0.0));
+    let dy = scene_sdf(p + vec3(0.0, eps, 0.0)) - scene_sdf(p - vec3(0.0, eps, 0.0));
+    let dz = scene_sdf(p + vec3(0.0, 0.0, eps)) - scene_sdf(p - vec3(0.0, 0.0, eps));
+
+    return normalize(vec3(dx, dy, dz));
+}
+
+fn get_rot_x(angle: f32) -> mat3x3<f32> {
+    let c = cos(angle);
+    let s = sin(angle);
+
+    return mat3x3<f32>(
+        vec3<f32>(1.0, 0.0, 0.0),
+        vec3<f32>(0.0, c, s),
+        vec3<f32>(0.0, -s, c)
+    );
+}
+
+fn get_rot_y(angle: f32) -> mat3x3<f32> {
+    let c = cos(angle);
+    let s = sin(angle);
+
+    return mat3x3<f32>(
+        vec3<f32>(c, 0.0, -s),
+        vec3<f32>(0.0, 1.0, 0.0),
+        vec3<f32>(s, 0.0, c)
+    );
+}
+
+fn apply_camera_rotation(dir: vec3<f32>, rot: vec3<f32>) -> vec3<f32> {
+    let rot_y = get_rot_y(rot.y);
+    let rot_x = get_rot_x(rot.x);
+
+    let combined_rot = rot_x * rot_y;
+
+    return combined_rot * dir;
 }
 
 @fragment
 fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     let ndc = (fragCoord.xy / screen_size) * 2.0 - vec2(1.0, 1.0);
     let aspect = screen_size.x / screen_size.y;
-    let dir = normalize(vec3(ndc.x * tan(cam.fov / 2.0) * aspect, ndc.y * tan(cam.fov / 2.0), 1.0));
+    let base_dir = normalize(vec3(ndc.x * tan(cam.fov / 2.0) * aspect, ndc.y * tan(cam.fov / 2.0), 1.0));
+    let dir = apply_camera_rotation(base_dir, cam.rot);
 
-    let color = rayMarch(cam.pos, dir);
+    let color = rayMarch(cam.pos + dir * 0.01, dir);
     return color;
 }

@@ -33,7 +33,7 @@ pub struct ScreenSize {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable, Debug)]
 pub struct Camera {
     pub pos: [f32; 3],
     pub _pad0: f32,
@@ -47,7 +47,7 @@ impl Default for Camera {
             pos: [0.0, 0.0, 0.0],
             _pad0: 0.0,
             rot: [0.0, 0.0, 1.0],
-            fov: std::f32::consts::PI * 2.0,
+            fov: std::f32::consts::PI / 2.0,
         }
     }
 }

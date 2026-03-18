@@ -13,6 +13,12 @@ fn main() {
     event_loop.set_control_flow(ControlFlow::Poll);
 
     let mut app = Renderer::new(game_loop);
+    app.set_camera(Camera {
+        pos: [0.0, 0.0, 0.0],
+        rot: [0.0, 0.0, 1.0],
+        fov: PI / 2.0,
+        ..Default::default()
+    });
 
     event_loop.run_app(&mut app).unwrap();
 }
@@ -25,11 +31,5 @@ fn game_loop(app: &mut Renderer) {
         ..Default::default()
     }];
     app.set_game_objects(game_objects);
-
-    app.set_camera(Camera {
-        pos: [0.0, 0.0, 0.0],
-        rot: [0.0, 0.0, 1.0],
-        fov: PI / 2.0,
-        ..Default::default()
-    });
+    //println!("{}", );
 }
