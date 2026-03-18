@@ -83,6 +83,7 @@ fn write_node(
     parent: i32,
 ) -> bool {
     use ObjectNodeType::*;
+    let index = nodes.len();
     match &node.typ {
         SDF(sdf) => {
             leafs.push(gpu_structs::LeafObject {
@@ -95,7 +96,6 @@ fn write_node(
         }
 
         Union(left, right) => {
-            let index = nodes.len();
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 0,
@@ -103,12 +103,11 @@ fn write_node(
                 parent: parent as i32,
                 ..Default::default()
             });
-            write_syntax_node(index, nodes, leafs, &left, &right);
+            write_not_leaf(index, nodes, leafs, &left, &right);
             false
         }
 
         Intersection(left, right) => {
-            let index = nodes.len();
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 0,
@@ -116,12 +115,11 @@ fn write_node(
                 parent: parent as i32,
                 ..Default::default()
             });
-            write_syntax_node(index, nodes, leafs, &left, &right);
+            write_not_leaf(index, nodes, leafs, &left, &right);
             false
         }
 
         Subtraction(left, right) => {
-            let index = nodes.len();
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 1,
@@ -129,37 +127,235 @@ fn write_node(
                 parent: parent as i32,
                 ..Default::default()
             });
-            write_syntax_node(index, nodes, leafs, left, right);
+            write_not_leaf(index, nodes, leafs, left, right);
             false
         }
     }
 }
 
-fn write_syntax_node(
+fn write_not_leaf(
     index: usize,
     nodes: &mut Vec<gpu_structs::SyntaxNode>,
     leafs: &mut Vec<gpu_structs::LeafObject>,
     left: &ObjectNode,
     right: &ObjectNode,
 ) {
-    let is_leaf_right = write_node(left, nodes, leafs, index as i32);
-
-    if is_leaf_right {
-        nodes[index].right = leafs.len() as i32 - 1;
-        nodes[index].right_gameobj = 1;
-    } else {
-        nodes[index].right = nodes.len() as i32 - 1;
-        nodes[index].right_gameobj = 0;
-    };
-
-    let is_leaf_left = write_node(right, nodes, leafs, index as i32);
+    //LEFT NODE
+    let leafs_len = leafs.len() as i32;
+    let nodes_len = nodes.len() as i32;
+    let is_leaf_left = write_node(left, nodes, leafs, index as i32);
 
     if is_leaf_left {
-        nodes[index].left = leafs.len() as i32 - 1;
+        nodes[index].left = leafs_len;
         //nodes[index].left_gameobj = 1;
     } else {
-        nodes[index].left = nodes.len() as i32 - 1;
-        unreachable!()
+        nodes[index].left = nodes_len;
+        unreachable!();
         //nodes[index].left_gameobj = 0;
     };
+
+    //RIGHT NODE
+    let leafs_len = leafs.len() as i32;
+    let nodes_len = nodes.len() as i32;
+    let is_leaf_right = write_node(right, nodes, leafs, index as i32);
+
+    if is_leaf_right {
+        nodes[index].right = leafs_len;
+        nodes[index].right_gameobj = 1;
+    } else {
+        nodes[index].right = nodes_len;
+        nodes[index].right_gameobj = 0;
+    };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::{big_dummy::BigDummy, dummy::Dummy};
+    use super::*;
+    use crate::gpu_structs::{LeafObject, SyntaxNode};
+
+    #[test]
+    fn test_dummy() {
+        let mut scene = Scene::new();
+        scene.add(Dummy::new());
+
+        let render_tree = scene.build_render_tree();
+
+        assert_eq!(
+            render_tree.nodes,
+            vec![SyntaxNode {
+                parent: -1,
+                left: 0,
+                left_neg: 0,
+                right: 1,
+                right_neg: 0,
+                right_gameobj: 1,
+                min: 1,
+                _pad: [0,],
+            },]
+        );
+
+        assert_eq!(
+            render_tree.leafs,
+            vec![
+                LeafObject {
+                    position: [0.0, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+                LeafObject {
+                    position: [0.7, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+            ]
+        );
+
+        assert_eq!(render_tree.first_layer_length, 1);
+    }
+
+    #[test]
+    fn test_big_dummy() {
+        let mut scene = Scene::new();
+        scene.add(BigDummy::new());
+
+        let render_tree = scene.build_render_tree();
+
+        assert_eq!(
+            render_tree.nodes,
+            vec![
+                SyntaxNode {
+                    parent: -1,
+                    left: 0,
+                    left_neg: 0,
+                    right: 1,
+                    right_neg: 0,
+                    right_gameobj: 0,
+                    min: 1,
+                    _pad: [0,],
+                },
+                SyntaxNode {
+                    parent: 0,
+                    left: 1,
+                    left_neg: 0,
+                    right: 2,
+                    right_neg: 0,
+                    right_gameobj: 1,
+                    min: 1,
+                    _pad: [0,],
+                },
+            ]
+        );
+
+        assert_eq!(
+            render_tree.leafs,
+            vec![
+                LeafObject {
+                    position: [1.0, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+                LeafObject {
+                    position: [2.0, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+                LeafObject {
+                    position: [3.0, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+            ]
+        );
+
+        assert_eq!(render_tree.first_layer_length, 1);
+    }
+
+    #[test]
+    fn test_big_and_small_dummy() {
+        let mut scene = Scene::new();
+        scene.add(Dummy::new());
+        scene.add(BigDummy::new());
+
+        let render_tree = scene.build_render_tree();
+
+        assert_eq!(
+            render_tree.nodes,
+            vec![
+                SyntaxNode {
+                    parent: -1,
+                    left: 0,
+                    left_neg: 0,
+                    right: 1,
+                    right_neg: 0,
+                    right_gameobj: 1,
+                    min: 1,
+                    _pad: [0,],
+                },
+                SyntaxNode {
+                    parent: -1,
+                    left: 2,
+                    left_neg: 0,
+                    right: 2,
+                    right_neg: 0,
+                    right_gameobj: 0,
+                    min: 1,
+                    _pad: [0,],
+                },
+                SyntaxNode {
+                    parent: 1,
+                    left: 3,
+                    left_neg: 0,
+                    right: 4,
+                    right_neg: 0,
+                    right_gameobj: 1,
+                    min: 1,
+                    _pad: [0,],
+                },
+            ]
+        );
+
+        assert_eq!(
+            render_tree.leafs,
+            vec![
+                LeafObject {
+                    position: [0.0, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+                LeafObject {
+                    position: [0.7, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+                LeafObject {
+                    position: [1.0, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+                LeafObject {
+                    position: [2.0, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+                LeafObject {
+                    position: [3.0, 0.0, 0.0,],
+                    size: 1.0,
+                    color: [1.0, 1.0, 1.0, 1.0,],
+                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                },
+            ]
+        );
+
+        assert_eq!(render_tree.first_layer_length, 2);
+    }
 }

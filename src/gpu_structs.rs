@@ -1,12 +1,14 @@
+use bytemuck::{Pod, Zeroable};
+
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable, Debug)]
 pub struct LeafObjectStorage {
     pub length: u32,
     pub _pad: [u32; 3],
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable, Debug)]
 pub struct LeafObject {
     pub position: [f32; 3],
     pub size: f32,
@@ -14,8 +16,23 @@ pub struct LeafObject {
     pub _padding: [f32; 4],
 }
 
+impl PartialEq for LeafObject {
+    fn eq(&self, other: &Self) -> bool {
+        self.position
+            .iter()
+            .zip(other.position.iter())
+            .all(|(a, b)| (a - b).abs() < 1e-6)
+            && (self.size - other.size).abs() < 1e-6
+            && self
+                .color
+                .iter()
+                .zip(other.color.iter())
+                .all(|(a, b)| (a - b).abs() < 1e-6)
+    }
+}
+
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable, Debug)]
 pub struct SyntaxNodeStorage {
     pub length: i32,
     pub num_root: i32,
@@ -23,7 +40,7 @@ pub struct SyntaxNodeStorage {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable, Debug, PartialEq)]
 pub struct SyntaxNode {
     pub parent: i32,
     pub left: i32,
@@ -64,14 +81,14 @@ impl Default for LeafObject {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable, Debug)]
 pub struct ScreenSize {
     pub size: [f32; 2],
     pub _pad: [f32; 2],
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Pod, Zeroable, Debug)]
 pub struct Camera {
     pub pos: [f32; 3],
     pub _pad0: f32,

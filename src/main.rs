@@ -10,6 +10,7 @@ use game_object::scene::Scene;
 use gpu_structs::Camera;
 use renderer::Renderer;
 
+use crate::game_object::big_dummy::BigDummy;
 use crate::game_object::dummy::Dummy;
 
 fn main() {
@@ -24,7 +25,7 @@ fn main() {
 fn update() -> impl FnMut(&mut Renderer) {
     let mut scene = Scene::new();
 
-    scene.add(Dummy::new());
+    scene.add(BigDummy::new());
 
     move |app| {
         app.set_camera(Camera {

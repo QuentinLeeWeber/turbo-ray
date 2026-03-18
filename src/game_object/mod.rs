@@ -1,5 +1,6 @@
 use crate::gpu_structs;
 
+pub mod big_dummy;
 pub mod dummy;
 pub mod object_tree;
 pub mod scene;
