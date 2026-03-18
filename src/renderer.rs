@@ -146,17 +146,17 @@ impl ApplicationHandler for Renderer {
             WindowEvent::CloseRequested => event_loop.exit(),
 
             WindowEvent::KeyboardInput { event, .. } => {
-                if event.state == ElementState::Pressed && !event.repeat {
+                if event.state == ElementState::Pressed {
                     match event.physical_key {
                         PhysicalKey::Code(KeyCode::Escape) => {
                             if self.cursor_grabbed {
                                 self.toggle_cursor_grab();
                             }
                         }
-                        PhysicalKey::Code(KeyCode::KeyW) => self.camera.pos[2] += 0.05,
-                        PhysicalKey::Code(KeyCode::KeyS) => self.camera.pos[2] -= 0.05,
-                        PhysicalKey::Code(KeyCode::KeyA) => self.camera.pos[0] -= 0.05,
-                        PhysicalKey::Code(KeyCode::KeyD) => self.camera.pos[0] += 0.05,
+                        PhysicalKey::Code(KeyCode::KeyW) => self.camera.pos[2] += 0.01,
+                        PhysicalKey::Code(KeyCode::KeyS) => self.camera.pos[2] -= 0.01,
+                        PhysicalKey::Code(KeyCode::KeyA) => self.camera.pos[0] -= 0.01,
+                        PhysicalKey::Code(KeyCode::KeyD) => self.camera.pos[0] += 0.01,
                         _ => (),
                     }
 
