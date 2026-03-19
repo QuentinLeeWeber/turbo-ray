@@ -1,13 +1,8 @@
-use crate::{
-    game_object::{self, Camera, GameObject},
-    wgpu_api::*,
-};
-use std::f32::consts::PI;
-use std::{collections::HashSet, sync::Arc};
-use wgpu::wgc::device::queue;
+use crate::{gpu_structs, wgpu_api::*};
+use std::{f32::consts::PI, sync::Arc};
 use winit::{
     application::ApplicationHandler,
-    event::{DeviceEvent, DeviceId, ElementState, Event, KeyEvent, WindowEvent},
+    event::{DeviceEvent, DeviceId, ElementState, WindowEvent},
     event_loop::ActiveEventLoop,
     keyboard::{KeyCode, PhysicalKey},
     window::{Window, WindowId},
@@ -17,7 +12,7 @@ pub struct Renderer {
     window: Option<Arc<Window>>,
     wgpu_api: Option<WgpuApi>,
     main_loop_callback: Option<Box<dyn FnMut(&mut Renderer)>>,
-    camera: Camera,
+    camera: gpu_structs::Camera,
     yaw: f32,
     pitch: f32,
     sensitivity: f32,
@@ -33,7 +28,7 @@ impl Renderer {
             yaw: 0.0,
             pitch: 0.0,
             sensitivity: 0.001,
-            camera: Camera {
+            camera: gpu_structs::Camera {
                 pos: [0.0, 0.0, 0.0],
                 rot: [0.0, 0.0, 1.0],
                 fov: PI / 2.0,
@@ -61,24 +56,39 @@ impl Renderer {
         }
     }
 
-    pub fn set_game_objects(&mut self, game_objects: Vec<game_object::GameObject>) {
-        let storage = game_object::GameObjectStorage {
-            length: game_objects.len() as u32,
+    //pub fn set_game_objects(&mut self, game_objects: Vec<gpu_structs::RenderObject>) {
+    pub fn set_syntax_tree(&mut self, syntax_tree: crate::game_object::FlatRenderTree) {
+        let leaf_storage = gpu_structs::LeafObjectStorage {
+            length: syntax_tree.leafs.len() as u32,
             _pad: [0; 3],
         };
 
-        let mut data = Vec::new();
-        data.extend_from_slice(bytemuck::cast_slice(&[storage]));
-        data.extend_from_slice(bytemuck::cast_slice(&game_objects));
+        let node_storage = gpu_structs::SyntaxNodeStorage {
+            length: syntax_tree.nodes.len() as u32,
+            num_root: syntax_tree.first_layer_length as i32,
+            // _pad: [0; 2],
+        };
+
+        let mut leaf_data = Vec::new();
+        leaf_data.extend_from_slice(bytemuck::cast_slice(&[leaf_storage]));
+        leaf_data.extend_from_slice(bytemuck::cast_slice(&syntax_tree.leafs));
+
+        let mut node_data = Vec::new();
+        node_data.extend_from_slice(bytemuck::cast_slice(&[node_storage]));
+        node_data.extend_from_slice(bytemuck::cast_slice(&syntax_tree.nodes));
 
         if let Some(state) = &mut self.wgpu_api {
             state
                 .queue
-                .write_buffer(&state.gpu_buffers.game_object, 0, &data);
+                .write_buffer(&state.gpu_buffers.game_object, 0, &leaf_data);
+
+            state
+                .queue
+                .write_buffer(&state.gpu_buffers.syntax_tree, 0, &node_data);
         }
     }
 
-    pub fn set_camera(&mut self, mut camera: game_object::Camera) {
+    pub fn set_camera(&mut self, mut camera: gpu_structs::Camera) {
         normalize(&mut camera.rot);
         if let Some(state) = &mut self.wgpu_api {
             state.queue.write_buffer(
@@ -108,12 +118,7 @@ impl ApplicationHandler for Renderer {
         self.window = Some(window);
     }
 
-    fn device_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        _device_id: DeviceId,
-        event: DeviceEvent,
-    ) {
+    fn device_event(&mut self, _: &ActiveEventLoop, _device_id: DeviceId, event: DeviceEvent) {
         match event {
             DeviceEvent::MouseMotion { delta } => {
                 let (delta_x, delta_y) = (delta.0 as f32, delta.1 as f32);
@@ -178,9 +183,7 @@ impl ApplicationHandler for Renderer {
                 ..
             } => {
                 if !self.cursor_grabbed && button == winit::event::MouseButton::Left {
-                    if let Some(window) = &self.window {
-                        self.toggle_cursor_grab();
-                    }
+                    self.toggle_cursor_grab();
                 }
             }
 
@@ -190,7 +193,7 @@ impl ApplicationHandler for Renderer {
                     state.queue.write_buffer(
                         &state.gpu_buffers.screen_size,
                         0,
-                        bytemuck::cast_slice(&[game_object::ScreenSize {
+                        bytemuck::cast_slice(&[gpu_structs::ScreenSize {
                             size: [size.width as f32, size.height as f32],
                             _pad: [0.0; 2],
                         }]),
@@ -211,8 +214,6 @@ impl ApplicationHandler for Renderer {
                 }
                 let camera = self.camera;
                 self.set_camera(camera);
-                println!("Camera Position: {:?}", camera.pos);
-                println!("Camera Rotation : {:?}", camera.rot);
             }
 
             _ => {}
