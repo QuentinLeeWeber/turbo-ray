@@ -123,7 +123,7 @@ fn write_node(
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 1,
-                min: 1,
+                min: 0,
                 parent: parent as i32,
                 ..Default::default()
             });
