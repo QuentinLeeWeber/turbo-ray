@@ -4,16 +4,15 @@ use bytemuck::{Pod, Zeroable};
 #[derive(Copy, Clone, Pod, Zeroable, Debug)]
 pub struct LeafObjectStorage {
     pub length: u32,
-    //pub _pad: [u32; 3],
+    pub _pad: [u32; 3],
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable, Debug)]
+#[derive(Copy, Clone, Pod, Zeroable, Debug, Default)]
 pub struct LeafObject {
     pub position: [f32; 3],
     pub size: f32,
     pub color: [f32; 4],
-    pub _padding: [f32; 4],
 }
 
 impl PartialEq for LeafObject {
@@ -36,7 +35,6 @@ impl PartialEq for LeafObject {
 pub struct SyntaxNodeStorage {
     pub length: u32,
     pub num_root: i32,
-    //pub _pad: [u32; 2],
 }
 
 #[repr(C)]
@@ -65,17 +63,6 @@ impl Default for SyntaxNode {
             right_gameobj: 0,
             min: 0,
             _pad: [0; 1],
-        }
-    }
-}
-
-impl Default for LeafObject {
-    fn default() -> Self {
-        Self {
-            position: [0.0, 0.0, 0.0],
-            size: 1.0,
-            color: [1.0, 1.0, 1.0, 1.0],
-            _padding: [0.0, 0.0, 0.0, 0.0],
         }
     }
 }

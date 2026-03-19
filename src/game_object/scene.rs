@@ -202,13 +202,13 @@ mod tests {
                     position: [0.0, 0.0, 2.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
                 LeafObject {
                     position: [0.7, 0.0, 2.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
             ]
         );
@@ -256,19 +256,19 @@ mod tests {
                     position: [1.0, 0.0, 0.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
                 LeafObject {
                     position: [2.0, 0.0, 0.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
                 LeafObject {
                     position: [3.0, 0.0, 0.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
             ]
         );
@@ -327,31 +327,31 @@ mod tests {
                     position: [0.0, 0.0, 2.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
                 LeafObject {
                     position: [0.7, 0.0, 2.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
                 LeafObject {
                     position: [1.0, 0.0, 0.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
                 LeafObject {
                     position: [2.0, 0.0, 0.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
                 LeafObject {
                     position: [3.0, 0.0, 0.0,],
                     size: 1.0,
                     color: [1.0, 1.0, 1.0, 1.0,],
-                    _padding: [0.0, 0.0, 0.0, 0.0,],
+                    ..Default::default()
                 },
             ]
         );

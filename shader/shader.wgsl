@@ -152,6 +152,25 @@ fn aproximative_normal(p: vec3<f32>, radius: f32) -> vec3<f32> {
 
 @fragment
 fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
+
+    /*if syntax_tree.nodes[0].parent == -1
+        && syntax_tree.nodes[0].left == 0
+        && syntax_tree.nodes[0].left_neg == 0
+        && syntax_tree.nodes[0].right == 1
+        && syntax_tree.nodes[0].right_neg == 0
+        && syntax_tree.nodes[0].right_gameobj == 1
+        && syntax_tree.nodes[0].min == 1
+        && game_objects.object[0].position.x == 0.0
+        && game_objects.object[0].position.y == 0.0
+        && game_objects.object[0].position.z == 2.0
+        && game_objects.object[0].size == 1.0
+        //&& game_objects.object[1].position.x == 0.7
+        && game_objects.object[1].position.y == 0.0
+        && game_objects.object[1].position.z == 2.0
+        && game_objects.object[1].size == 1.0 {
+        return vec4(1.0, 0.0, 0.0, 1.0);
+    }*/
+
     let ndc = (fragCoord.xy / screen_size) * 2.0 - vec2(1.0, 1.0);
     let aspect = screen_size.x / screen_size.y;
     let dir = normalize(vec3(ndc.x * tan(cam.fov / 2.0) * aspect, ndc.y * tan(cam.fov / 2.0), 1.0));

@@ -26,7 +26,7 @@ impl Renderer {
     pub fn set_syntax_tree(&mut self, syntax_tree: crate::game_object::FlatRenderTree) {
         let leaf_storage = gpu_structs::LeafObjectStorage {
             length: syntax_tree.leafs.len() as u32,
-            // _pad: [0; 3],
+            _pad: [0; 3],
         };
 
         let node_storage = gpu_structs::SyntaxNodeStorage {
