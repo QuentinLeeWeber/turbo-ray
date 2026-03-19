@@ -25,7 +25,7 @@ fn main() {
 fn update() -> impl FnMut(&mut Renderer) {
     let mut scene = Scene::new();
 
-    scene.add(BigDummy::new());
+    scene.add(Dummy::new());
 
     move |app| {
         app.set_camera(Camera {

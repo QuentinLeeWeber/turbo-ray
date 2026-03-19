@@ -17,6 +17,7 @@ pub enum SceneCommand {
     Spawn(GameObjectBox),
 }
 
+#[derive(Debug)]
 pub struct FlatRenderTree {
     pub nodes: Vec<gpu_structs::SyntaxNode>,
     pub leafs: Vec<gpu_structs::LeafObject>,

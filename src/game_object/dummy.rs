@@ -19,7 +19,7 @@ impl Dummy {
                         }),
                         x: 0.0,
                         y: 0.0,
-                        z: 0.0,
+                        z: 2.0,
                     }),
                     Box::new(ObjectNodeRaw {
                         typ: ObjectNodeType::SDF(SignedDistanceFunction {
@@ -28,7 +28,7 @@ impl Dummy {
                         }),
                         x: 0.7,
                         y: 0.0,
-                        z: 0.0,
+                        z: 2.0,
                     }),
                 ),
                 x: 0.0,

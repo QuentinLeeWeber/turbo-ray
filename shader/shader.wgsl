@@ -13,7 +13,7 @@ const PI: f32 = 3.14159265359;
 @group(0) @binding(0)
 var<storage, read> game_objects: GameObjectStorage;
 struct GameObjectStorage {
-    length: i32,
+    length: u32,
     object: array<GameObject>,
 }
 struct GameObject {
@@ -25,7 +25,7 @@ struct GameObject {
 @group(3) @binding(0)
 var<storage,read> syntax_tree: SyntaxTree;
 struct SyntaxTree {
-    length: i32,
+    length: u32,
     num_root: i32,
     nodes: array<SyntaxNode>,
 }
