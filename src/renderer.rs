@@ -16,6 +16,7 @@ pub struct Renderer {
     yaw: f32,
     pitch: f32,
     sensitivity: f32,
+    move_speed: f32,
     cursor_grabbed: bool,
 }
 
@@ -34,6 +35,7 @@ impl Renderer {
                 fov: PI / 2.0,
                 ..Default::default()
             },
+            move_speed: 0.1,
             cursor_grabbed: false,
         }
     }
@@ -88,22 +90,13 @@ impl Renderer {
         }
     }
 
-    pub fn set_camera(&mut self, mut camera: gpu_structs::Camera) {
-        normalize(&mut camera.rot);
-        if let Some(state) = &mut self.wgpu_api {
-            state.queue.write_buffer(
-                &state.gpu_buffers.camera,
-                0,
-                bytemuck::cast_slice(&[camera]),
-            );
-        }
-    }
-}
-
-fn normalize(rot: &mut [f32]) {
-    let len = rot.iter().map(|c| c * c).sum::<f32>().sqrt();
-    for c in rot {
-        *c /= len;
+    fn walk(&mut self, forward: f32, sideways: f32, vertical: f32) {
+        use std::f32::consts::FRAC_PI_2;
+        self.camera.pos[0] += forward * self.camera.rot[1].sin() * self.move_speed;
+        self.camera.pos[2] += forward * self.camera.rot[1].cos() * self.move_speed;
+        self.camera.pos[0] += sideways * (self.camera.rot[1] + FRAC_PI_2).sin() * self.move_speed;
+        self.camera.pos[2] += sideways * (self.camera.rot[1] + FRAC_PI_2).cos() * self.move_speed;
+        self.camera.pos[1] += vertical * self.move_speed;
     }
 }
 
@@ -121,6 +114,9 @@ impl ApplicationHandler for Renderer {
     fn device_event(&mut self, _: &ActiveEventLoop, _device_id: DeviceId, event: DeviceEvent) {
         match event {
             DeviceEvent::MouseMotion { delta } => {
+                if !self.cursor_grabbed {
+                    return;
+                }
                 let (delta_x, delta_y) = (delta.0 as f32, delta.1 as f32);
 
                 self.yaw += delta_x * self.sensitivity;
@@ -128,14 +124,6 @@ impl ApplicationHandler for Renderer {
 
                 self.camera.rot[0] = self.pitch;
                 self.camera.rot[1] = self.yaw;
-
-                if let Some(state) = &mut self.wgpu_api {
-                    state.queue.write_buffer(
-                        &state.gpu_buffers.camera,
-                        0,
-                        bytemuck::cast_slice(&[self.camera]),
-                    );
-                }
             }
             _ => {}
         }
@@ -158,10 +146,12 @@ impl ApplicationHandler for Renderer {
                                 self.toggle_cursor_grab();
                             }
                         }
-                        PhysicalKey::Code(KeyCode::KeyW) => self.camera.pos[2] += 0.01,
-                        PhysicalKey::Code(KeyCode::KeyS) => self.camera.pos[2] -= 0.01,
-                        PhysicalKey::Code(KeyCode::KeyA) => self.camera.pos[0] -= 0.01,
-                        PhysicalKey::Code(KeyCode::KeyD) => self.camera.pos[0] += 0.01,
+                        PhysicalKey::Code(KeyCode::KeyW) => self.walk(1.0, 0.0, 0.0),
+                        PhysicalKey::Code(KeyCode::KeyS) => self.walk(-1.0, 0.0, 0.0),
+                        PhysicalKey::Code(KeyCode::KeyA) => self.walk(0.0, -1.0, 0.0),
+                        PhysicalKey::Code(KeyCode::KeyD) => self.walk(0.0, 1.0, 0.0),
+                        PhysicalKey::Code(KeyCode::Space) => self.walk(0.0, 0.0, -1.0),
+                        PhysicalKey::Code(KeyCode::KeyC) => self.walk(0.0, 0.0, 1.0),
                         _ => (),
                     }
 
@@ -212,8 +202,14 @@ impl ApplicationHandler for Renderer {
                 if let Some(window) = &self.window {
                     window.request_redraw();
                 }
-                let camera = self.camera;
-                self.set_camera(camera);
+
+                if let Some(state) = &mut self.wgpu_api {
+                    state.queue.write_buffer(
+                        &state.gpu_buffers.camera,
+                        0,
+                        bytemuck::cast_slice(&[self.camera]),
+                    );
+                }
             }
 
             _ => {}
