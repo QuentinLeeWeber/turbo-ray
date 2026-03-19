@@ -86,11 +86,13 @@ fn get_smallest_distance(origin: vec3<f32>) -> SmallestRadiusResult {
     var min_radius: f32 = 1000000.0;
     var min_index: i32 = 0;
     for (var i: i32 = 0; i < syntax_tree.num_root; i++) {
-        let cur_node = &syntax_tree.nodes[get_lowest_leaf(i)];
-        let right_gameobj = &game_objects.object[(*cur_node).right];
+        var cur_node_index: i32 = i;
+        let cur_node_tmp = &syntax_tree.nodes[get_lowest_leaf(cur_node_index)];
+        let right_gameobj = &game_objects.object[(*cur_node_tmp).right];
         var cur_dist: f32 = sdSphere((*right_gameobj).position - origin, (*right_gameobj).size);//always right node combined value, initially lowest right leaf distance
-        var collided_gameobj_index = (*cur_node).right;
-        while (*cur_node).parent >= 0 {
+        var collided_gameobj_index = (*cur_node_tmp).right;
+        while true {
+            let cur_node = &syntax_tree.nodes[get_lowest_leaf(cur_node_index)];
             let left_gameobj = &game_objects.object[(*cur_node).left];
             var left_dist: f32 = sdSphere((*left_gameobj).position - origin, (*left_gameobj).size);
             if (*cur_node).left_neg != 0 {
@@ -109,6 +111,10 @@ fn get_smallest_distance(origin: vec3<f32>) -> SmallestRadiusResult {
             }
             if cur_dist == left_dist {
                 collided_gameobj_index = (*cur_node).left;
+            }
+            cur_node_index = (*cur_node).parent;
+            if cur_node_index < 0 {
+                break;
             }
         }
         if cur_dist < min_radius {
