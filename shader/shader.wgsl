@@ -132,7 +132,7 @@ fn rayMarch(origin: vec3<f32>, direction: vec3<f32>) -> vec4<f32> {
             let cos_angle = dot(aproximative_normal(point, radius_result.radius), cam.rot);
             let brightness = clamp(cos_angle, 0.0, 1.0);
 
-            let color = game_objects.object[radius_result.index].color.rgb * brightness * (1.0 - dist);
+            let color = game_objects.object[radius_result.index].color.rgb /** brightness * (1.0 - dist)*/;
 
             return vec4(color, 1.0);
         }
@@ -159,7 +159,7 @@ fn fs_main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
         && syntax_tree.nodes[0].right == 1
         && syntax_tree.nodes[0].right_neg == 0
         && syntax_tree.nodes[0].right_gameobj == 1
-        && syntax_tree.nodes[0].min == 1
+        && syntax_tree.nodes[0].min == 0
         && game_objects.object[0].position.x == 0.0
         && game_objects.object[0].position.y == 0.0
         && game_objects.object[0].position.z == 2.0

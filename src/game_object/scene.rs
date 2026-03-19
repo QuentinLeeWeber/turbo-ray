@@ -99,7 +99,7 @@ fn write_node(
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 0,
-                min: 0,
+                min: 1,
                 parent: parent as i32,
                 ..Default::default()
             });
@@ -111,7 +111,7 @@ fn write_node(
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 0,
-                min: 1,
+                min: 0,
                 parent: parent as i32,
                 ..Default::default()
             });
@@ -123,7 +123,7 @@ fn write_node(
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 1,
-                min: 0,
+                min: 1,
                 parent: parent as i32,
                 ..Default::default()
             });
@@ -190,7 +190,7 @@ mod tests {
                 right: 1,
                 right_neg: 0,
                 right_gameobj: 1,
-                min: 1,
+                min: 0,
                 _pad: [0,],
             },]
         );
@@ -233,7 +233,7 @@ mod tests {
                     right: 1,
                     right_neg: 0,
                     right_gameobj: 0,
-                    min: 1,
+                    min: 0,
                     _pad: [0,],
                 },
                 SyntaxNode {
@@ -243,7 +243,7 @@ mod tests {
                     right: 2,
                     right_neg: 0,
                     right_gameobj: 1,
-                    min: 1,
+                    min: 0,
                     _pad: [0,],
                 },
             ]
@@ -294,7 +294,7 @@ mod tests {
                     right: 1,
                     right_neg: 0,
                     right_gameobj: 1,
-                    min: 1,
+                    min: 0,
                     _pad: [0,],
                 },
                 SyntaxNode {
@@ -304,7 +304,7 @@ mod tests {
                     right: 2,
                     right_neg: 0,
                     right_gameobj: 0,
-                    min: 1,
+                    min: 0,
                     _pad: [0,],
                 },
                 SyntaxNode {
@@ -314,7 +314,7 @@ mod tests {
                     right: 4,
                     right_neg: 0,
                     right_gameobj: 1,
-                    min: 1,
+                    min: 0,
                     _pad: [0,],
                 },
             ]
