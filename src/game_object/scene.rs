@@ -63,9 +63,15 @@ impl Scene {
         if self.game_objects.is_empty() {
             panic!("game_objects is empty, not implemented!");
         }
-
+        const INITIAL_TRANSFORM: Transform = [0.0, 0.0, 0.0];
         for game_obj in &self.game_objects {
-            write_node(game_obj.get_syntax_tree(), &mut nodes, &mut leafs, -1);
+            write_node(
+                game_obj.get_syntax_tree(),
+                &mut nodes,
+                &mut leafs,
+                -1,
+                &INITIAL_TRANSFORM,
+            );
         }
 
         FlatRenderTree {
@@ -75,19 +81,25 @@ impl Scene {
         }
     }
 }
-
+type Transform = [f32; 3];
 fn write_node(
     node: &ObjectNode,
     nodes: &mut Vec<gpu_structs::SyntaxNode>,
     leafs: &mut Vec<gpu_structs::LeafObject>,
     parent: i32,
+    parent_transform: &Transform,
 ) -> bool {
     use ObjectNodeType::*;
     let index = nodes.len();
     match &node.typ {
         SDF(sdf) => {
+            let world_pos = [
+                parent_transform[0] + node.x,
+                parent_transform[1] + node.y,
+                parent_transform[2] + node.z,
+            ];
             leafs.push(gpu_structs::LeafObject {
-                position: [node.x, node.y, node.z],
+                position: world_pos,
                 size: sdf.size,
                 color: sdf.color,
                 ..Default::default()
@@ -96,6 +108,7 @@ fn write_node(
         }
 
         Union(left, right) => {
+            let current_transform = *parent_transform;
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 0,
@@ -103,11 +116,12 @@ fn write_node(
                 parent: parent as i32,
                 ..Default::default()
             });
-            write_not_leaf(index, nodes, leafs, &left, &right);
+            write_not_leaf(index, nodes, leafs, &left, &right, &current_transform);
             false
         }
 
         Intersection(left, right) => {
+            let current_transform = *parent_transform;
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 0,
@@ -115,11 +129,12 @@ fn write_node(
                 parent: parent as i32,
                 ..Default::default()
             });
-            write_not_leaf(index, nodes, leafs, &left, &right);
+            write_not_leaf(index, nodes, leafs, &left, &right, &current_transform);
             false
         }
 
         Subtraction(left, right) => {
+            let current_transform = *parent_transform;
             nodes.push(gpu_structs::SyntaxNode {
                 left_neg: 0,
                 right_neg: 1,
@@ -127,7 +142,7 @@ fn write_node(
                 parent: parent as i32,
                 ..Default::default()
             });
-            write_not_leaf(index, nodes, leafs, left, right);
+            write_not_leaf(index, nodes, leafs, left, right, &current_transform);
             false
         }
     }
@@ -139,11 +154,12 @@ fn write_not_leaf(
     leafs: &mut Vec<gpu_structs::LeafObject>,
     left: &ObjectNode,
     right: &ObjectNode,
+    current_transform: &Transform,
 ) {
     //LEFT NODE
     let leafs_len = leafs.len() as i32;
     let nodes_len = nodes.len() as i32;
-    let is_leaf_left = write_node(left, nodes, leafs, index as i32);
+    let is_leaf_left = write_node(left, nodes, leafs, index as i32, current_transform);
 
     if is_leaf_left {
         nodes[index].left = leafs_len;
@@ -157,7 +173,7 @@ fn write_not_leaf(
     //RIGHT NODE
     let leafs_len = leafs.len() as i32;
     let nodes_len = nodes.len() as i32;
-    let is_leaf_right = write_node(right, nodes, leafs, index as i32);
+    let is_leaf_right = write_node(right, nodes, leafs, index as i32, current_transform);
 
     if is_leaf_right {
         nodes[index].right = leafs_len;
