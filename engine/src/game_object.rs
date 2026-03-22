@@ -1,5 +1,5 @@
-use crate::renderer::gpu_structs;
-use crate::scene::SceneCommand;
+use crate::{renderer::gpu_structs, scene::SceneCommand};
+use std::{cell::RefCell, rc::Rc};
 
 pub type GameObjectBox = Box<dyn GameObjectTrait>;
 
@@ -15,7 +15,7 @@ pub struct FlatRenderTree {
     pub first_layer_length: u32,
 }
 
-pub type ObjectNode = Box<ObjectNodeRaw>;
+pub type ObjectNode = Rc<RefCell<ObjectNodeRaw>>;
 
 #[derive(Debug)]
 pub struct ObjectNodeRaw {

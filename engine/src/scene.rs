@@ -85,6 +85,7 @@ fn write_node(
 ) -> bool {
     use ObjectNodeType::*;
     let index = nodes.len();
+    let node = node.borrow();
     match &node.typ {
         SDF(sdf) => {
             leafs.push(gpu_structs::LeafObject {
@@ -173,8 +174,7 @@ fn write_not_leaf(
 mod tests {
     use super::*;
     use crate::renderer::gpu_structs::{LeafObject, SyntaxNode};
-
-    //use crate::game_object::*;
+    use std::{cell::RefCell, rc::Rc};
 
     pub struct Dummy {
         object_tree: ObjectNode,
@@ -183,9 +183,9 @@ mod tests {
     impl Dummy {
         pub fn new() -> Self {
             Self {
-                object_tree: Box::new(ObjectNodeRaw {
+                object_tree: Rc::new(RefCell::new(ObjectNodeRaw {
                     typ: ObjectNodeType::Intersection(
-                        Box::new(ObjectNodeRaw {
+                        Rc::new(RefCell::new(ObjectNodeRaw {
                             typ: ObjectNodeType::SDF(SignedDistanceFunction {
                                 color: [1.0, 1.0, 1.0, 1.0],
                                 size: 1.0,
@@ -193,8 +193,8 @@ mod tests {
                             x: 0.0,
                             y: 0.0,
                             z: 2.0,
-                        }),
-                        Box::new(ObjectNodeRaw {
+                        })),
+                        Rc::new(RefCell::new(ObjectNodeRaw {
                             typ: ObjectNodeType::SDF(SignedDistanceFunction {
                                 color: [1.0, 1.0, 1.0, 1.0],
                                 size: 1.0,
@@ -202,12 +202,12 @@ mod tests {
                             x: 0.7,
                             y: 0.0,
                             z: 2.0,
-                        }),
+                        })),
                     ),
                     x: 0.0,
                     y: 0.0,
                     z: 0.0,
-                }),
+                })),
             }
         }
     }
@@ -230,9 +230,9 @@ mod tests {
     impl BigDummy {
         pub fn new() -> Self {
             Self {
-                object_tree: Box::new(ObjectNodeRaw {
+                object_tree: Rc::new(RefCell::new(ObjectNodeRaw {
                     typ: ObjectNodeType::Intersection(
-                        Box::new(ObjectNodeRaw {
+                        Rc::new(RefCell::new(ObjectNodeRaw {
                             typ: ObjectNodeType::SDF(SignedDistanceFunction {
                                 color: [1.0, 1.0, 1.0, 1.0],
                                 size: 1.0,
@@ -240,10 +240,10 @@ mod tests {
                             x: 1.0,
                             y: 0.0,
                             z: 0.0,
-                        }),
-                        Box::new(ObjectNodeRaw {
+                        })),
+                        Rc::new(RefCell::new(ObjectNodeRaw {
                             typ: ObjectNodeType::Intersection(
-                                Box::new(ObjectNodeRaw {
+                                Rc::new(RefCell::new(ObjectNodeRaw {
                                     typ: ObjectNodeType::SDF(SignedDistanceFunction {
                                         color: [1.0, 1.0, 1.0, 1.0],
                                         size: 1.0,
@@ -251,8 +251,8 @@ mod tests {
                                     x: 2.0,
                                     y: 0.0,
                                     z: 0.0,
-                                }),
-                                Box::new(ObjectNodeRaw {
+                                })),
+                                Rc::new(RefCell::new(ObjectNodeRaw {
                                     typ: ObjectNodeType::SDF(SignedDistanceFunction {
                                         color: [1.0, 1.0, 1.0, 1.0],
                                         size: 1.0,
@@ -260,17 +260,17 @@ mod tests {
                                     x: 3.0,
                                     y: 0.0,
                                     z: 0.0,
-                                }),
+                                })),
                             ),
                             x: 0.0,
                             y: 0.0,
                             z: 0.0,
-                        }),
+                        })),
                     ),
                     x: 0.0,
                     y: 0.0,
                     z: 0.0,
-                }),
+                })),
             }
         }
     }

@@ -6,6 +6,8 @@ use engine::{
     scene::{Scene, SceneCommand},
 };
 
+use std::{cell::RefCell, rc::Rc};
+
 struct OrbitObject {
     object_tree: ObjectNode,
 }
@@ -13,9 +15,9 @@ struct OrbitObject {
 impl OrbitObject {
     fn new() -> Self {
         Self {
-            object_tree: Box::new(ObjectNodeRaw {
+            object_tree: Rc::new(RefCell::new(ObjectNodeRaw {
                 typ: ObjectNodeType::Intersection(
-                    Box::new(ObjectNodeRaw {
+                    Rc::new(RefCell::new(ObjectNodeRaw {
                         typ: ObjectNodeType::SDF(SignedDistanceFunction {
                             color: [1.0, 1.0, 1.0, 1.0],
                             size: 1.0,
@@ -23,8 +25,8 @@ impl OrbitObject {
                         x: 0.0,
                         y: 0.0,
                         z: 2.0,
-                    }),
-                    Box::new(ObjectNodeRaw {
+                    })),
+                    Rc::new(RefCell::new(ObjectNodeRaw {
                         typ: ObjectNodeType::SDF(SignedDistanceFunction {
                             color: [1.0, 1.0, 1.0, 1.0],
                             size: 1.0,
@@ -32,12 +34,12 @@ impl OrbitObject {
                         x: 0.7,
                         y: 0.0,
                         z: 2.0,
-                    }),
+                    })),
                 ),
                 x: 0.0,
                 y: 0.0,
                 z: 0.0,
-            }),
+            })),
         }
     }
 }
