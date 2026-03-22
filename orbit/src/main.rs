@@ -1,14 +1,14 @@
-use crate::game_object::{
-    GameObjectTrait, SceneCommand,
-    object_tree::{ObjectNode, ObjectNodeRaw, ObjectNodeType, SignedDistanceFunction},
+use engine::{
+    Engine, GameObjectTrait, ObjectNode, ObjectNodeRaw, ObjectNodeType, Scene, SceneCommand,
+    SignedDistanceFunction,
 };
 
-pub struct Dummy {
+struct OrbitObject {
     object_tree: ObjectNode,
 }
 
-impl Dummy {
-    pub fn new() -> Self {
+impl OrbitObject {
+    fn new() -> Self {
         Self {
             object_tree: Box::new(ObjectNodeRaw {
                 typ: ObjectNodeType::Intersection(
@@ -39,13 +39,26 @@ impl Dummy {
     }
 }
 
-impl GameObjectTrait for Dummy {
-    fn update(&mut self, delta_time: f64) -> Vec<SceneCommand> {
-        let _ = delta_time;
+impl GameObjectTrait for OrbitObject {
+    fn update(&mut self, _delta_time: f64) -> Vec<SceneCommand> {
         vec![]
     }
 
     fn get_syntax_tree(&self) -> &ObjectNode {
         &self.object_tree
     }
+}
+
+fn main() {
+    let mut scene = Scene::new();
+
+    scene.add(OrbitObject::new());
+
+    let engine = Engine::new(
+        |_| {
+            println!("das ist elon muskete");
+        },
+        scene,
+    );
+    engine.run();
 }
