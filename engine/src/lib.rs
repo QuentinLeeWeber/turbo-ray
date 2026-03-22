@@ -1,16 +1,12 @@
 use winit::event_loop::{ControlFlow, EventLoop};
 
-mod game_object;
-mod gpu_structs;
+pub mod game_object;
+pub mod scene;
+
 mod renderer;
-mod wgpu_api;
 
 use renderer::Renderer;
-
-pub use game_object::{
-    GameObjectTrait, SceneCommand, object_tree::ObjectNode, object_tree::ObjectNodeRaw,
-    object_tree::ObjectNodeType, object_tree::SignedDistanceFunction, scene::Scene,
-};
+use scene::Scene;
 
 pub struct Engine {
     renderer: Renderer,
@@ -35,14 +31,3 @@ impl Engine {
         self.event_loop.run_app(&mut self.renderer).unwrap();
     }
 }
-
-/*fn update() -> impl FnMut(&mut Renderer) {
-    let mut scene = Scene::new();
-
-    scene.add(Dummy::new());
-
-    move |app| {
-        scene.update();
-        app.set_syntax_tree(scene.build_render_tree());
-    }
-}*/

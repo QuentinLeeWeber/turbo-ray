@@ -1,4 +1,4 @@
-use crate::gpu_structs::{self, Camera};
+use super::gpu_structs::{self, Camera};
 use pollster::FutureExt;
 use std::sync::Arc;
 use wgpu::util::DeviceExt;
@@ -60,7 +60,7 @@ impl WgpuApi {
         };
         surface.configure(&device, &config);
 
-        let shader_src = include_str!("../shader/shader.wgsl");
+        let shader_src = include_str!("shader.wgsl");
         let shader = device.create_shader_module(ShaderModuleDescriptor {
             label: Some("shader.wgsl"),
             source: ShaderSource::Wgsl(shader_src.into()),

@@ -1,6 +1,9 @@
 use engine::{
-    Engine, GameObjectTrait, ObjectNode, ObjectNodeRaw, ObjectNodeType, Scene, SceneCommand,
-    SignedDistanceFunction,
+    Engine,
+    game_object::{
+        GameObjectTrait, ObjectNode, ObjectNodeRaw, ObjectNodeType, SignedDistanceFunction,
+    },
+    scene::{Scene, SceneCommand},
 };
 
 struct OrbitObject {

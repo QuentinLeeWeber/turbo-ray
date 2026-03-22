@@ -1,4 +1,4 @@
-use crate::{game_object::scene::Scene, gpu_structs, wgpu_api::*};
+use crate::scene::Scene;
 use std::{f32::consts::PI, sync::Arc};
 use winit::{
     application::ApplicationHandler,
@@ -7,6 +7,11 @@ use winit::{
     keyboard::{KeyCode, PhysicalKey},
     window::{Window, WindowId},
 };
+
+pub mod gpu_structs;
+mod wgpu_api;
+
+use wgpu_api::WgpuApi;
 
 pub struct Renderer {
     window: Option<Arc<Window>>,

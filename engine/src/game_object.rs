@@ -1,3 +1,20 @@
+use crate::renderer::gpu_structs;
+use crate::scene::SceneCommand;
+
+pub type GameObjectBox = Box<dyn GameObjectTrait>;
+
+pub trait GameObjectTrait {
+    fn update(&mut self, delta_time: f64) -> Vec<SceneCommand>;
+    fn get_syntax_tree(&self) -> &ObjectNode;
+}
+
+#[derive(Debug)]
+pub struct FlatRenderTree {
+    pub nodes: Vec<gpu_structs::SyntaxNode>,
+    pub leafs: Vec<gpu_structs::LeafObject>,
+    pub first_layer_length: u32,
+}
+
 pub type ObjectNode = Box<ObjectNodeRaw>;
 
 #[derive(Debug)]
