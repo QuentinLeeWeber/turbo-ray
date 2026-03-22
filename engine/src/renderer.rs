@@ -1,4 +1,4 @@
-use crate::{gpu_structs, wgpu_api::*};
+use crate::{game_object::scene::Scene, gpu_structs, wgpu_api::*};
 use std::{f32::consts::PI, sync::Arc};
 use winit::{
     application::ApplicationHandler,
@@ -18,10 +18,11 @@ pub struct Renderer {
     sensitivity: f32,
     move_speed: f32,
     cursor_grabbed: bool,
+    scene: Scene,
 }
 
 impl Renderer {
-    pub fn new(main_loop_callback: impl FnMut(&mut Renderer) + 'static) -> Self {
+    pub fn new(main_loop_callback: impl FnMut(&mut Renderer) + 'static, scene: Scene) -> Self {
         Self {
             window: None,
             wgpu_api: None,
@@ -37,6 +38,7 @@ impl Renderer {
             },
             move_speed: 0.1,
             cursor_grabbed: false,
+            scene,
         }
     }
 
@@ -192,6 +194,8 @@ impl ApplicationHandler for Renderer {
             }
 
             WindowEvent::RedrawRequested => {
+                self.scene.update();
+                self.set_syntax_tree(self.scene.build_render_tree());
                 if let Some(mut callback) = self.main_loop_callback.take() {
                     (callback)(self);
                     self.main_loop_callback = Some(callback);
